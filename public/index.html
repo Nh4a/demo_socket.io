@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .message-container {
+        display: flex;
+        /* flex-direction: column; */
+        align-items: flex-start;
+        list-style: none;
+
+        padding: 0;
+        margin-bottom: 10px;
+        background-color: #f1f1f1;
+      }
+      #messages-list {
+        margin-top: 20px;
+        width: 50%;
+        border-radius: 5px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        background-color: whitesmoke;
+      }
+      .guestmessage {
+        width: fit-content;
+        background-color: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+      }
+      .mymessage {
+        align-self: end;
+        width: fit-content;
+        background-color: #d1ffd1;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        text-align: right;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="text" id="username-input" placeholder="Enter your username" />
+    <button id="set-username">Set Username</button>
+    <br />
+    <br />
+    <input type="text" id="message-input" placeholder="Enter your message..." />
+    <button id="btn-submit">Send</button>
+    <ul id="messages-list"></ul>
+  </body>
+</html>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const Id = crypto.randomUUID().split("-")[0];
+
+  const messageList = [];
+  const socket = io();
+  const messageTxt = document.getElementById("message-input");
+  const messagesListShow = document.getElementById("messages-list");
+  const btnSubmit = document.getElementById("btn-submit");
+  const setUsernameBtn = document.getElementById("set-username");
+  const usernameInput = document.getElementById("username-input");
+
+  setUsernameBtn.addEventListener("click", () => {
+    const username = usernameInput.value.trim();
+    socket.emit("join", {
+      username: username,
+      id: Id,
+    });
+    usernameInput.value = "";
+  });
+
+  btnSubmit.addEventListener("click", () => {
+    const message = messageTxt.value;
+    socket.emit("chat message", message);
+    // messageList.push(message);
+    renderMessages();
+    messageTxt.value = "";
+  });
+
+  socket.on("chat message", (data) => {
+    messageList.push(data);
+    renderMessages();
+  });
+
+  const renderMessages = () => {
+    messagesListShow.innerHTML = "";
+    messageList.forEach((msg) => {
+      let message;
+      const li = document.createElement("li");
+      if (msg.id === Id) {
+        li.className = "mymessage";
+        message = `${msg.message} : You`;
+      } else {
+        li.className = "guestmessage";
+        message = `${msg.username}: ${msg.message}`;
+      }
+      li.textContent = message;
+      messagesListShow.appendChild(li);
+    });
+  };
+</script>
